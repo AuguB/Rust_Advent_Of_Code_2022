@@ -1,7 +1,7 @@
 
-mod day1;
-use crate::day1::sum_of_largest_n;
+mod day2;
+use crate::day2::get_score;
 
 fn main() {
-    sum_of_largest_n(3);
+    get_score();
 }
