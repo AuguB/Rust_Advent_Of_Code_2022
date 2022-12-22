@@ -12,3 +12,13 @@ It's going okay I guess. I think I need to tone down on the chaining stuff a bit
 
 I completed the bonus exercise. I simply created a 3*3 reward matrix, and get the values from that with the derived indices from the strings. The original and bonus exercise only differ by the reward matrix.
 
+### Day3, 4 
+No comment. Pretty easy
+
+### Day 5
+Was struggling to mutate a vec that I stored in a hashmap. Now I understand that I have to use get_mut to do that.
+
+The second thing I was struggling with was returning the hashmap. The compiler complained about not being able to return the mutable references, because the function that returned them was the owner, so they would go out of scope. I then understood that I had to transfer the ownership by not returning a reference, but by returning the object itself, thereby giving ownership to the receiving object. The one thing I don't fully understand yet, is how it is possible that the Vec is mutable, without specifying it as a mutable reference.
+
+Okay, I think I get it. The get_mut function returns a mutable reference, of which there can be exactly one. here is no need to specify that the vec is mutable, because it is certain that there will be only one mutating object at the same time. When the object is returned, all mutable references have been dropped.
+
