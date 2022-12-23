@@ -27,8 +27,11 @@ No comment
 
 ### Day 7
 The most obvious way seemed to be a tree structure, which felt like it would be rather straight-forward to implement. I would have had no problem with Python, but I struggled for many hours without result. I decided to give it up for now. I need to learn more about the language before I can continue. Most importantly I need to know more about:
-* Liftimes
+* Lifetimes
 * Smart Pointers
+
+UPDATE: 
+I did it, without lifetimes and without smart pointers. It was a pain, but it worked. I didn't use a Tree datastructure in the end, but a simple for loop and some hashmap stuff. I am extremely relieved.
 
 ### Day 8
 I needed a success, and I came to day 8 for that. The assignment wasn't very difficult, but I did spend a lot of time on this. Knowing how to solve a problem doesn't mean anything if you aren't familiar with a language. In Python, I would have been able to use vectorized operations, and rotate the matrix to be able to perform the same thing four times. Here, I don't know how to do that. 
