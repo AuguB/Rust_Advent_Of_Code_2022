@@ -1,11 +1,11 @@
 #![allow(dead_code)]
-
-mod day7;
-use crate::day7::{compute_solution_1, compute_solution_2};
+#![allow(unused_variables)]
+mod day8;
+use crate::day8::{compute_solution_1, compute_solution_2};
 
 fn main() {
-    let day: u32 = 7;
-    let use_dummy_input: bool = true;
+    let day: u32 = 8;
+    let use_dummy_input: bool = false;
     compute_solution_1(get_input(day, use_dummy_input));
     compute_solution_2(get_input(day, use_dummy_input));
 }

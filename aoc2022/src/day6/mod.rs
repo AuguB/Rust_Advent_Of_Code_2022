@@ -1,5 +1,5 @@
-pub fn compute_solution_1(input: String) {
-    detect_n_consecutive_unique_characters(4, input);
+pub fn compute_solution_1(_input: String) {
+    detect_n_consecutive_unique_characters(4, _input);
 }
 
 fn detect_n_consecutive_unique_characters(n:usize,input:String){

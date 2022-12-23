@@ -22,3 +22,17 @@ The second thing I was struggling with was returning the hashmap. The compiler c
 
 Okay, I think I get it. The get_mut function returns a mutable reference, of which there can be exactly one. here is no need to specify that the vec is mutable, because it is certain that there will be only one mutating object at the same time. When the object is returned, all mutable references have been dropped.
 
+### Day 6
+No comment
+
+### Day 7
+The most obvious way seemed to be a tree structure, which felt like it would be rather straight-forward to implement. I would have had no problem with Python, but I struggled for many hours without result. I decided to give it up for now. I need to learn more about the language before I can continue. Most importantly I need to know more about:
+* Liftimes
+* Smart Pointers
+
+### Day 8
+I needed a success, and I came to day 8 for that. The assignment wasn't very difficult, but I did spend a lot of time on this. Knowing how to solve a problem doesn't mean anything if you aren't familiar with a language. In Python, I would have been able to use vectorized operations, and rotate the matrix to be able to perform the same thing four times. Here, I don't know how to do that. 
+
+I also spent a lot of time tracking down stupid bugs that I just made because my mind is foggy. I think I will take a night off. 
+
+
