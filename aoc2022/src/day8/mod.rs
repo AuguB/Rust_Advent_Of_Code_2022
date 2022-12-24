@@ -1,4 +1,5 @@
 use array2d::Array2D;
+use ndarray::{prelude::*, OwnedRepr, RawData, ViewRepr};
 pub fn compute_solution_1(input: String) {
     let n_rows = input.lines().count();
     let n_cols = input.lines().nth(0).unwrap().len();
@@ -102,4 +103,76 @@ fn print_heights(seen: &Array2D<u32>) {
     println!()
 }
 
-pub fn compute_solution_2(input: String) {}
+pub fn compute_solution_2(input: String) {
+    let n_rows = input.matches("\n").count() + 1;
+    let chars = input.replace("\n", "");
+    let n_columns = chars.len() / n_rows;
+    let mut tree_heights = chars
+        .chars()
+        .map(|c| c.to_digit(10).unwrap())
+        .collect::<Vec<u32>>();
+
+    let mut trees = ArrayViewMut2::from_shape((n_rows, n_columns), &mut tree_heights).unwrap();
+
+    let mut product_view_lengths: ArrayBase<OwnedRepr<u32>, Dim<[usize; 2]>> = Array2::ones((n_rows, n_columns));
+
+    for i in 0..4 {
+        // flip then transpose the source array i times
+        trees = rotate_right(trees, i);
+
+        // Get a mutable array for the i't view lengths
+        let mut view_lengths = Array2::zeros((n_rows, n_columns));
+        view_lengths[[0, 0]] = 1;
+
+        // Compute the view lengths and store in view length array
+        for ii in 0..n_rows {
+            for jj in 0..n_columns {
+                view_lengths[[ii, jj]] = compute_view_length(&trees, ii, jj);
+            }
+        }
+
+        // transpose then flip the source and the computed array i times
+        trees = rotate_left(trees, i);
+        view_lengths = rotate_left(view_lengths, i);
+
+        // Store the result in the vec
+        product_view_lengths = product_view_lengths * view_lengths;
+    }
+
+    println!("{}", product_view_lengths.iter().max().unwrap());
+}
+
+fn compute_view_length<T>(arr: &ArrayViewMut2<T>, row: usize, col: usize) -> u32
+where
+    T: PartialOrd,
+{
+    // For the specified row, count the number of trees to the right before a tree at least as big is encountered
+    for (view_length, tree_index) in (col + 1..arr.ncols()).enumerate() {
+        if arr[[row, tree_index]] >= arr[[row, col]] {
+            return (view_length + 1) as u32;
+        }
+    }
+    (arr.ncols() - col - 1) as u32
+}
+
+fn rotate_right<T, D: ndarray::Dimension>(mut arr: ArrayBase<T, D>, count: u32) -> ArrayBase<T, D>
+where
+    T: RawData,
+{
+    for _ in 0..=count {
+        arr = arr.reversed_axes();
+        arr.invert_axis(Axis(0));
+    }
+    arr
+}
+
+fn rotate_left<T, D: ndarray::Dimension>(mut arr: ArrayBase<T, D>, count: u32) -> ArrayBase<T, D>
+where
+    T: RawData,
+{
+    for _ in 0..=count {
+        arr.invert_axis(Axis(0));
+        arr = arr.reversed_axes();
+    }
+    arr
+}

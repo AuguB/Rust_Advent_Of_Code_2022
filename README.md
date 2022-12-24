@@ -38,4 +38,6 @@ I needed a success, and I came to day 8 for that. The assignment wasn't very dif
 
 I also spent a lot of time tracking down stupid bugs that I just made because my mind is foggy. I think I will take a night off. 
 
+Part two is my proudest work so far. I used a new ndarray library and I actually read the docs (phew). Didn't make a lot of sense at the start but I think I get it at least a little now. I used some generic typing for a few functions, and overall I am pretty happy with the approach, even though it is probably not the optimal solution. I was considering doing some simulated annealing, but yeah.
+
 

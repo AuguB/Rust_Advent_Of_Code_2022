@@ -1,6 +1,6 @@
 //cargo watch -x test
 use std::collections::HashMap;
-
+use ndarray::{ArrayD}
 use regex::Regex;
 
 pub fn compute_solution_1(_input: String) {
@@ -108,4 +108,7 @@ fn get_path(parents: &Vec<String>, child: Option<&str>) -> String {
     path
 }
 
-pub fn compute_solution_2(_input: String) {}
+pub fn compute_solution_2(_input: String) {
+
+
+}
