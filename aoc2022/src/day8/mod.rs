@@ -8,21 +8,21 @@ pub fn compute_solution_1(input: String) {
         .map(|c| c.to_digit(10).unwrap() as i32)
         .collect::<Vec<i32>>();
 
-    let mut trees = ArrayViewMut2::from_shape((n_rows, n_columns), &mut tree_heights).unwrap();
+    let mut trees = ArrayView2::from_shape((n_rows, n_columns), &mut tree_heights).unwrap();
 
-    let mut seen_trees = Array2::from_elem((n_rows, n_columns),false);
+    let mut seen_trees = Array2::from_elem((n_rows, n_columns), false);
 
     // Initiate a zero counter
     let mut number_of_seen_trees = 0;
 
     // // In all four directions, do the following:
-    for rot in 0..4{
+    for rot in 0..4 {
         //  For each line of vision:
         for row_i in 0..n_rows {
             //set a max_tree_height_counter to 0
             let mut max_tree_height: i32 = -1;
             //For each tree in the line of vision:
-            for col_i in 0..n_columns{
+            for col_i in 0..n_columns {
                 if trees[[row_i, col_i]] > max_tree_height {
                     // If the boolean value is false:
                     if !seen_trees[[row_i, col_i]] {
@@ -42,7 +42,6 @@ pub fn compute_solution_1(input: String) {
     println!("{number_of_seen_trees}");
 }
 
-
 pub fn compute_solution_2(input: String) {
     let n_rows = input.matches("\n").count() + 1;
     let chars = input.replace("\n", "");
@@ -54,7 +53,8 @@ pub fn compute_solution_2(input: String) {
 
     let mut trees = ArrayViewMut2::from_shape((n_rows, n_columns), &mut tree_heights).unwrap();
 
-    let mut product_view_lengths: ArrayBase<OwnedRepr<u32>, Dim<[usize; 2]>> = Array2::ones((n_rows, n_columns));
+    let mut product_view_lengths: ArrayBase<OwnedRepr<u32>, Dim<[usize; 2]>> =
+        Array2::ones((n_rows, n_columns));
 
     for i in 0..4 {
         // flip then transpose the source array
@@ -62,7 +62,9 @@ pub fn compute_solution_2(input: String) {
         product_view_lengths = rotate_right(product_view_lengths, 1);
 
         // Get an array with the view lengths
-        let view_lengths = Array::from_shape_fn((n_rows, n_columns), |(ii,jj)| compute_view_length(&trees, ii,jj));
+        let view_lengths = Array::from_shape_fn((n_rows, n_columns), |(ii, jj)| {
+            compute_view_length(&trees, ii, jj)
+        });
 
         // Store the product
         product_view_lengths = product_view_lengths * view_lengths;
@@ -94,4 +96,3 @@ where
     }
     arr
 }
-
