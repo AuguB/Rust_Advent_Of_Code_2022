@@ -57,22 +57,14 @@ pub fn compute_solution_2(input: String) {
     let mut product_view_lengths: ArrayBase<OwnedRepr<u32>, Dim<[usize; 2]>> = Array2::ones((n_rows, n_columns));
 
     for i in 0..4 {
-        // flip then transpose the source array 1 time
+        // flip then transpose the source array
         trees = rotate_right(trees, 1);
         product_view_lengths = rotate_right(product_view_lengths, 1);
 
-        // Get a mutable array for the i't view lengths
-        let mut view_lengths = Array2::zeros((n_rows, n_columns));
-        view_lengths[[0, 0]] = 1;
+        // Get an array with the view lengths
+        let view_lengths = Array::from_shape_fn((n_rows, n_columns), |(ii,jj)| compute_view_length(&trees, ii,jj));
 
-        // Compute the view lengths and store in view length array
-        for ii in 0..n_rows {
-            for jj in 0..n_columns {
-                view_lengths[[ii, jj]] = compute_view_length(&trees, ii, jj);
-            }
-        }
-
-        // Store the result in the vec
+        // Store the product
         product_view_lengths = product_view_lengths * view_lengths;
     }
 
