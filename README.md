@@ -41,3 +41,5 @@ I also spent a lot of time tracking down stupid bugs that I just made because my
 Part two is my proudest work so far. I used a new ndarray library and I actually read the docs (phew). Didn't make a lot of sense at the start but I think I get it at least a little now. I used some generic typing for a few functions, and overall I am pretty happy with the approach, even though it is probably not the optimal solution. I was considering doing some simulated annealing, but yeah.
 
 
+### Day 9
+This was fun. I used some structs and enums, and I think my algorithm is pretty clever. Looking at the instructions it was pretty tempting to use an array representation, but I realised using a vector of integer tuples was way easier. It has space complexity of O(m+n) where m is the length of the rope and n is the number of steps it takes. Nice and linear and pretty. 
