@@ -1,44 +1,36 @@
-use std::{cmp, collections::HashSet, fmt::Display, str::FromStr};
+use std::{cmp::{self, max}, collections::HashSet, fmt::Display, str::FromStr};
 
 use regex::{internal::Inst, Captures, Regex};
 
-struct Rope {
-    knots: Vec<(i32, i32)>,
+pub fn compute_solution_1(input: String) {
+    trace_rope(2, input);
 }
 
-impl Rope {
-    fn make_at(length: u32, loc: (i32, i32)) -> Self {
-        Rope {
-            knots: vec![(0, 0); length as usize],
-        }
+pub fn compute_solution_2(input: String) {
+    trace_rope(10, input);
+}
+
+pub fn trace_rope(length: u32, input: String) {
+    let pattern = Regex::new(r"(\w{1}) (\d*)").unwrap();
+    let instructions = pattern
+        .captures_iter(&input)
+        .map(|m| {
+            (0..(m[2].parse::<i32>().unwrap())).map(move |_| Instruction {
+                direction: Direction::from_string(&m[1]),
+                length: 1,
+            })
+        })
+        .flatten();
+    let mut rope: Rope = Rope::make_at(length, (0, 0));
+    let mut t_locs: HashSet<(i32, i32)> = HashSet::new();
+    t_locs.insert(rope.tail());
+
+    for inst in instructions {
+        rope.apply_instruction(inst);
+        t_locs.insert(rope.tail());
     }
 
-    fn apply_instruction(&mut self, inst: Instruction) {
-        self.knots[0] = inst.apply_on(self.knots[0]);
-        for knot_i in 1..self.knots.len() {
-            self.knots[knot_i] = Rope::compute_new_loc(self.knots[knot_i], self.knots[knot_i - 1]);
-        }
-    }
-
-    fn compute_new_loc(this_loc: (i32, i32), parent_loc: (i32, i32)) -> (i32, i32) {
-        let (this_x, this_y) = this_loc;
-        let (parent_x, parent_y) = parent_loc;
-        let dif_x = parent_x - this_x;
-        let dif_y = parent_y - this_y;
-        if (dif_x.abs() <= 1) & (dif_y.abs() <= 1) {
-            return this_loc;
-        } else {
-            match (dif_x.abs(), dif_y.abs()) {
-                (2, 0) => (this_x + dif_x.signum(), this_y),
-                (0, 2) => (this_x, this_y + dif_y.signum()),
-                _ => (this_x + dif_x.signum(), this_y + dif_y.signum()),
-            }
-        }
-    }
-
-    fn tail(&self) -> Option<(i32, i32)> {
-        self.knots.last().copied()
-    }
+    println!("{}", t_locs.len());
 }
 
 struct Instruction {
@@ -84,36 +76,38 @@ impl Direction {
     }
 }
 
-fn close_to(h: (i32, i32), t: (i32, i32)) -> bool {
-    ((h.0 - t.0).abs() <= 1) & ((h.1 - t.1).abs() <= 1)
+struct Rope {
+    knots: Vec<(i32, i32)>,
 }
 
-pub fn compute_solution_1(input: String) {
-    trace_rope(2, input);
-}
-
-pub fn trace_rope(length: u32, input: String) {
-    let pattern = Regex::new(r"(\w{1}) (\d*)").unwrap();
-    let instructions = pattern
-        .captures_iter(&input)
-        .map(|m| {
-            (0..(m[2].parse::<i32>().unwrap())).map(move |_| Instruction {
-                direction: Direction::from_string(&m[1]),
-                length: 1,
-            })
-        })
-        .flatten();
-    let mut rope: Rope = Rope::make_at(length, (0, 0));
-    let mut t_locs: HashSet<(i32, i32)> = HashSet::new();
-    t_locs.insert(rope.tail().unwrap());
-
-    for inst in instructions {
-        rope.apply_instruction(inst);
-        t_locs.insert(rope.tail().unwrap());
+impl Rope {
+    fn make_at(length: u32, loc: (i32, i32)) -> Self {
+        Rope {
+            knots: vec![(0, 0); length as usize],
+        }
     }
 
-    println!("{}", t_locs.len());
-}
-pub fn compute_solution_2(input: String) {
-    trace_rope(10, input);
+    fn apply_instruction(&mut self, inst: Instruction) {
+        self.knots[0] = inst.apply_on(self.knots[0]);
+        for knot_i in 1..self.knots.len() {
+            self.knots[knot_i] = Rope::compute_new_loc(self.knots[knot_i], self.knots[knot_i - 1]);
+        }
+    }
+
+    fn compute_new_loc(this_loc: (i32, i32), parent_loc: (i32, i32)) -> (i32, i32) {
+        let ((this_x, this_y), (parent_x, parent_y)) = (this_loc, parent_loc);
+        let (dif_x, dif_y) = (parent_x - this_x, parent_y - this_y);
+        if max(dif_x.abs(), dif_y.abs()) > 1 {
+            return match (dif_x.abs(), dif_y.abs()) {
+                (2, 0) => (this_x + dif_x.signum(), this_y),
+                (0, 2) => (this_x, this_y + dif_y.signum()),
+                _ => (this_x + dif_x.signum(), this_y + dif_y.signum()),
+            }
+        }
+        this_loc
+    }
+
+    fn tail(&self) -> (i32, i32) {
+        self.knots.last().copied().unwrap()
+    }
 }
