@@ -1,6 +1,5 @@
-use std::cell::RefCell;
-
 use regex::{Captures, Regex};
+use std::cell::RefCell;
 
 struct Monkey {
     items: RefCell<Vec<u64>>,
@@ -53,7 +52,7 @@ pub fn compute_solution_1(input: String) {
 
 pub fn compute_solution_2(input: String) {
     let monkeys = make_monkeys(input);
-    let modulus: u64 = monkeys.iter().fold(1, |a, m| a*m.divisor);
+    let modulus: u64 = monkeys.iter().fold(1, |a, m| a * m.divisor);
     let worry_level_management_function = Box::new(move |f: u64| f % modulus);
     throw_stuff_around(monkeys, 10000, worry_level_management_function)
 }
@@ -81,7 +80,7 @@ fn throw_stuff_around(
                 let worry_level = worry_level_management_function((monkey.operation)(*item));
                 let receiver = match worry_level % monkey.divisor {
                     0 => monkey.receiver_1,
-                    _ => monkey.receiver_2
+                    _ => monkey.receiver_2,
                 };
                 let mut monkey_items = monkeys[receiver as usize].items.borrow_mut();
                 monkey_items.push(worry_level);
@@ -95,8 +94,6 @@ fn throw_stuff_around(
         .map(|a| a.num_inspections.replace(0))
         .collect::<Vec<u64>>();
     monkey_scores.sort();
-    println!(
-        "{}",
-        monkey_scores[monkey_scores.len() - 1] * monkey_scores[monkey_scores.len() - 2]
-    );
+    monkey_scores.reverse();
+    println!("{}", monkey_scores[0] * monkey_scores[1]);
 }
