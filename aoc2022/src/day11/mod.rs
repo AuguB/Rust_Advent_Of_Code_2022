@@ -6,8 +6,8 @@ struct Monkey {
     items: RefCell<Vec<u64>>,
     operation: Box<dyn Fn(u64) -> u64>,
     divisor: u64,
-    true_case: u64,
-    false_case: u64,
+    receiver_1: u64,
+    receiver_2: u64,
     num_inspections: RefCell<u64>,
 }
 
@@ -23,8 +23,8 @@ impl Monkey {
             ),
             operation: Monkey::parse_operator(&capt),
             divisor: capt[4].parse::<u64>().unwrap(),
-            true_case: capt[5].parse::<u64>().unwrap(),
-            false_case: capt[6].parse::<u64>().unwrap(),
+            receiver_1: capt[5].parse::<u64>().unwrap(),
+            receiver_2: capt[6].parse::<u64>().unwrap(),
             num_inspections: RefCell::new(0),
         }
     }
@@ -43,13 +43,6 @@ impl Monkey {
             _ => unreachable!(),
         }
     }
-    fn money_to_pass_to_idx(&self, worry_level: u64) -> u64 {
-        return if ((self.operation)(worry_level) / 3) % 3 == 0 {
-            self.true_case
-        } else {
-            self.false_case
-        };
-    }
 }
 
 pub fn compute_solution_1(input: String) {
@@ -60,7 +53,7 @@ pub fn compute_solution_1(input: String) {
 
 pub fn compute_solution_2(input: String) {
     let monkeys = make_monkeys(input);
-    let modulus: u64 = monkeys.iter().map(|e| e.divisor).product();
+    let modulus: u64 = monkeys.iter().fold(1, |a, m| a*m.divisor);
     let worry_level_management_function = Box::new(move |f: u64| f % modulus);
     throw_stuff_around(monkeys, 10000, worry_level_management_function)
 }
@@ -85,14 +78,13 @@ fn throw_stuff_around(
         for monkey_i in 0..monkeys.len() {
             let monkey = &monkeys[monkey_i];
             for item in monkey.items.borrow().iter() {
-                let new_worry_level = worry_level_management_function((monkey.operation)(*item));
-                let monkey_to_pass_to_idx = if new_worry_level % monkey.divisor == 0 {
-                    monkey.true_case
-                } else {
-                    monkey.false_case
+                let worry_level = worry_level_management_function((monkey.operation)(*item));
+                let receiver = match worry_level % monkey.divisor {
+                    0 => monkey.receiver_1,
+                    _ => monkey.receiver_2
                 };
-                let mut monkey_items = monkeys[monkey_to_pass_to_idx as usize].items.borrow_mut();
-                monkey_items.push(new_worry_level);
+                let mut monkey_items = monkeys[receiver as usize].items.borrow_mut();
+                monkey_items.push(worry_level);
                 monkey.num_inspections.replace_with(|old| *old + 1);
             }
             monkey.items.replace(Vec::new());
