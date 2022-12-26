@@ -18,12 +18,7 @@ pub fn get_badge_priorities() {
         "/home/stijn/Projects/Rust_Advent_Of_Code_2022/aoc2022/src/day3/input.txt",
     ).unwrap();
 
-//     let input = String::from("vJrwpWtwJgWrhcsFMMfFFhFp
-// jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
-// PmmdzqPrVvPwwTWBwg
-// wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
-// ttgJtRGJQctTZtZT
-// CrZsJsPPZsGzwwsLwLmpwMDw");
+
     let list: Vec<&str> = input.split_whitespace().collect::<Vec<&str>>();
 
     let mut _sum = 0;

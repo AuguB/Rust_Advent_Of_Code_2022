@@ -2,12 +2,12 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 
-mod day11;
-use crate::day11::{compute_solution_1,compute_solution_2};
+mod day12;
+use crate::day12::{compute_solution_1,compute_solution_2};
 
 fn main() {
-    let day: u32 = 11;
-    let use_dummy_input: bool = false;
+    let day: u32 = 12;
+    let use_dummy_input: bool = true;
     compute_solution_1(get_input(day, use_dummy_input));
     compute_solution_2(get_input(day, use_dummy_input));
 }
