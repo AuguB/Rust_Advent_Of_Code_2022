@@ -3,12 +3,12 @@ use std::cell::RefCell;
 use regex::{Captures, Regex};
 
 struct Monkey {
-    items: RefCell<Vec<u32>>,
-    operation: Box<dyn Fn(u32) -> u32>,
-    divisor: u32,
-    true_case: u32,
-    false_case: u32,
-    num_inspections: RefCell<u32>,
+    items: RefCell<Vec<u64>>,
+    operation: Box<dyn Fn(u64) -> u64>,
+    divisor: u64,
+    true_case: u64,
+    false_case: u64,
+    num_inspections: RefCell<u64>,
 }
 
 impl Monkey {
@@ -18,32 +18,32 @@ impl Monkey {
                 capt[1]
                     .replace(&[','], "")
                     .split_whitespace()
-                    .map(|f| f.parse::<u32>().unwrap())
-                    .collect::<Vec<u32>>(),
+                    .map(|f| f.parse::<u64>().unwrap())
+                    .collect::<Vec<u64>>(),
             ),
             operation: Monkey::parse_operator(&capt),
-            divisor: capt[4].parse::<u32>().unwrap(),
-            true_case: capt[5].parse::<u32>().unwrap(),
-            false_case: capt[6].parse::<u32>().unwrap(),
+            divisor: capt[4].parse::<u64>().unwrap(),
+            true_case: capt[5].parse::<u64>().unwrap(),
+            false_case: capt[6].parse::<u64>().unwrap(),
             num_inspections: RefCell::new(0),
         }
     }
-    fn parse_operator(capt: &Captures) -> Box<dyn Fn(u32) -> u32> {
+    fn parse_operator(capt: &Captures) -> Box<dyn Fn(u64) -> u64> {
         match (&capt[2], &capt[3]) {
             ("+", "old") => Box::new(|f| f + f),
             ("*", "old") => Box::new(|f| f * f),
             ("+", a) => {
-                let num = a.parse::<u32>().unwrap();
+                let num = a.parse::<u64>().unwrap();
                 Box::new(move |f| f + num.clone())
             }
             ("*", a) => {
-                let num = a.parse::<u32>().unwrap();
+                let num = a.parse::<u64>().unwrap();
                 Box::new(move |f| f * num.clone())
             }
             _ => unreachable!(),
         }
     }
-    fn money_to_pass_to_idx(&self, worry_level: u32) -> u32 {
+    fn money_to_pass_to_idx(&self, worry_level: u64) -> u64 {
         return if ((self.operation)(worry_level) / 3) % 3 == 0 {
             self.true_case
         } else {
@@ -53,21 +53,39 @@ impl Monkey {
 }
 
 pub fn compute_solution_1(input: String) {
+    let monkeys = make_monkeys(input);
+    let worry_level_management_function = Box::new(|f: u64| f / 3);
+    throw_stuff_around(monkeys, 20, worry_level_management_function)
+}
+
+pub fn compute_solution_2(input: String) {
+    let monkeys = make_monkeys(input);
+    let modulus: u64 = monkeys.iter().map(|e| e.divisor).product();
+    let worry_level_management_function = Box::new(move |f: u64| f % modulus);
+    throw_stuff_around(monkeys, 10000, worry_level_management_function)
+}
+
+fn make_monkeys(input: String) -> Vec<Monkey> {
     let extreme_pattern = Regex::new(
         r".*\d{1}:\s*[^\n\d]*([^\n]*)[^+*]*([+*]{1}) (\d*|old)\n[^\d]*(\d*)[^\d]*(\d*)[^\d]*(\d*)",
     )
     .unwrap();
-
-    let monkeys = extreme_pattern
+    extreme_pattern
         .captures_iter(&input)
         .map(|capture| Monkey::from_capture(capture))
-        .collect::<Vec<Monkey>>();
+        .collect::<Vec<Monkey>>()
+}
 
-    for round in 0..20 {
+fn throw_stuff_around(
+    monkeys: Vec<Monkey>,
+    n_rounds: u64,
+    worry_level_management_function: Box<dyn Fn(u64) -> u64>,
+) {
+    for round in 0..n_rounds {
         for monkey_i in 0..monkeys.len() {
             let monkey = &monkeys[monkey_i];
             for item in monkey.items.borrow().iter() {
-                let new_worry_level = (monkey.operation)(*item) / 3;
+                let new_worry_level = worry_level_management_function((monkey.operation)(*item));
                 let monkey_to_pass_to_idx = if new_worry_level % monkey.divisor == 0 {
                     monkey.true_case
                 } else {
@@ -80,10 +98,13 @@ pub fn compute_solution_1(input: String) {
             monkey.items.replace(Vec::new());
         }
     }
-
-    let monkey_scores = monkeys
+    let mut monkey_scores = monkeys
         .iter()
-        .for_each(|a| println!("{}", &a.num_inspections.borrow()));
+        .map(|a| a.num_inspections.replace(0))
+        .collect::<Vec<u64>>();
+    monkey_scores.sort();
+    println!(
+        "{}",
+        monkey_scores[monkey_scores.len() - 1] * monkey_scores[monkey_scores.len() - 2]
+    );
 }
-
-pub fn compute_solution_2(input: String) {}

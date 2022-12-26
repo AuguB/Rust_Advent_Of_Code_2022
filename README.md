@@ -46,3 +46,12 @@ This was fun. I used some structs and enums, and I think my algorithm is pretty 
 
 ### Day 10
 Done, pretty straightforward, no comment.
+
+### Day 11
+This was fun. I had to use some functional patterns for the first time, for which I had to use the `Box<dyn Fn(T) -> T>` pattern. I also used a `RefCell` for the first time. 
+
+For part two, it was nice to see that finite field theory didn't fail me. 
+
+### Day 12
+
+This will be much fun. I am going to write an A* algorithm, and that was a long time ago. Woohoo!
