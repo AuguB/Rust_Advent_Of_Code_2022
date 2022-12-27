@@ -1,7 +1,7 @@
 //cargo watch -x test
-use std::collections::HashMap;
-use ndarray::{ArrayD}
+use ndarray::ArrayD;
 use regex::Regex;
+use std::collections::HashMap;
 
 pub fn compute_solution_1(_input: String) {
     let commands = Regex::new(r"\$ (cd (\.\.|/|\w*){1}|ls)|(\d+)\s([\w\.]+)|dir (\w*)").unwrap();
@@ -33,10 +33,7 @@ pub fn compute_solution_1(_input: String) {
                             if let Some(filesize) = next_match.get(3) {
                                 let filesize = filesize.as_str().parse::<u32>().unwrap();
                                 for parent in parents.iter() {
-                                    dir_sizes
-                                        .entry(parent.to_string())
-                                        .and_modify(|size| *size += filesize)
-                                        .or_insert(filesize);
+                                    dir_sizes.entry(parent.to_string()).and_modify(|size| *size += filesize).or_insert(filesize);
                                 }
                             } else if let Some(dirname) = next_match.get(5) {
                                 let dir_path: String = get_path(&parents, Some(dirname.as_str()));
@@ -65,7 +62,7 @@ pub fn compute_solution_1(_input: String) {
         }
     }
     let mut sum_of_small_folders: u32 = 0;
-    let size_of_small_folder:u32 =  100000;
+    let size_of_small_folder: u32 = 100000;
     let root = String::from("/");
     let mut size_of_smallest_dir_that_is_large_enough: &u32 = dir_sizes.get(&root).unwrap();
     let total_space = 70000000;
@@ -75,7 +72,7 @@ pub fn compute_solution_1(_input: String) {
     let space_to_be_freed = target_space - available_space;
 
     for (key, value) in dir_sizes.iter() {
-        if value <=&size_of_small_folder{
+        if value <= &size_of_small_folder {
             sum_of_small_folders += value;
         }
         if value >= &space_to_be_freed {
@@ -84,15 +81,9 @@ pub fn compute_solution_1(_input: String) {
             }
         }
     }
-    println!(
-        "sum_of_small_folders {}",
-        sum_of_small_folders
-    );
+    println!("sum_of_small_folders {}", sum_of_small_folders);
 
-    println!(
-        "size_of_smallest_dir_that_is_large_enough {}",
-        size_of_smallest_dir_that_is_large_enough
-    )
+    println!("size_of_smallest_dir_that_is_large_enough {}", size_of_smallest_dir_that_is_large_enough)
 }
 
 fn get_path(parents: &Vec<String>, child: Option<&str>) -> String {
@@ -108,7 +99,4 @@ fn get_path(parents: &Vec<String>, child: Option<&str>) -> String {
     path
 }
 
-pub fn compute_solution_2(_input: String) {
-
-
-}
+pub fn compute_solution_2(_input: String) {}
