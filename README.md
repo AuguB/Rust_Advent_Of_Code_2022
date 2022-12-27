@@ -55,3 +55,5 @@ For part two, it was nice to see that finite field theory didn't fail me.
 ### Day 12
 
 This will be much fun. I am going to write an A* algorithm, and that was a long time ago. Woohoo!
+
+Wow, that was a bit of work. I finished part one but I didn't make it general enough to adapt it easily to part 2. I ended up writing what is probably my ugliest code ever, and I started over with the whole thing this morning. My solution is a lot better now, and it might be re-usable for next days as well :)

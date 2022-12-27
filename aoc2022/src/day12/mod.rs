@@ -1,253 +1,150 @@
 use std::{
-    cell::{Cell, RefCell},
-    collections::BinaryHeap,
+    borrow::Borrow,
+    char,
+    collections::{BinaryHeap, HashMap, HashSet},
 };
 
-use itertools::Itertools;
-use ndarray::{prelude::*, OwnedRepr, RawData, ViewRepr};
-use regex::Regex;
+use ndarray::Array2;
 
 pub fn compute_solution_1(input: String) {
-    // Create a landscape
-    let landscape: MountainRange = MountainRange::new(input);
-
-    // Create a Heap with all our paths
-    let mut heap: BinaryHeap<Path> = BinaryHeap::new();
-
-    // Create a path at the start position
-    let initial_path = Path::new(vec![landscape.start_loc], &landscape);
-
-    // throw it in a heap
-    heap.push(initial_path);
-
-    // Store solution
-    let mut solution = Path::new(vec![(0, 0)], &landscape);
-
-    let mut n_evaluations = 0;
-
-    // While the heap is not empty, and solution has not been found:
-    while !heap.is_empty() {
-        //  take the next value from the heap
-        let next_path = heap.pop().unwrap();
-        let next_endpoint = next_path.get_endpoint();
-        landscape.visited_map.borrow_mut()[[next_endpoint.0 as usize, next_endpoint.1 as usize]] =
-            true;
-
-        //  if is the solution
-        if next_path.is_solution() {
-            solution = next_path;
-            break;
-        } else {
-            for neighbor in landscape.neighbors(next_path.get_endpoint()) {
-                let mut cloned_path = next_path.path.clone();
-                cloned_path.push(neighbor);
-                heap.push(Path {
-                    path: cloned_path,
-                    mountainrange: &landscape,
-                })
-            }
-        }
-        n_evaluations += 1;
-    }
-    println!(
-        "Found a path of len {} in {} evaluations",
-        solution.length(),
-        n_evaluations
-    );
-    solution.draw();
+    let nodes = parse_mountains(input);
+    let end_loc = nodes.iter().filter(|(loc, (char, _))| *char == 'E').collect::<Vec<(&(i32, i32), &(char, bool))>>();
+    let end_loc = end_loc[0].0.clone();
+    let manhattan_distance = |n: (i32, i32)| (n.0 - end_loc.0).abs() + (n.1 - end_loc.1).abs();
+    a_star(nodes, 'S', 'E', manhattan_distance, false);
 }
 
 pub fn compute_solution_2(input: String) {
-    // Create a landscape
-    let landscape: MountainRange = MountainRange::new(input);
+    let nodes = parse_mountains(input);
+    let heuristic = |n: (i32, i32)| 0;
+    a_star(nodes, 'E', 'a', heuristic, true);
+}
 
-    // Create a Heap with all our paths
-    let mut heap: BinaryHeap<Path> = BinaryHeap::new();
+pub fn a_star<F: Fn((i32, i32)) -> i32>(
+    mut nodes: HashMap<(i32, i32), (char, bool)>,
+    start: char,
+    search: char,
+    heuristic: F,
+    invert_direction: bool,
+) {
+    let start_loc =
+        nodes.iter().filter(|(loc, (char, _))| *char == start).collect::<Vec<(&(i32, i32), &(char, bool))>>();
 
-    // Create a path at the start position
-    let initial_path = Path::new(vec![landscape.start_loc], &landscape);
+    if start_loc.len() == 1 {
+        let start_loc = start_loc[0];
+        let n_nodes = nodes.len() as i32;
+        let mut queue: Vec<(i32, i32, (i32, i32))> = Vec::new();
+        let mut parents: HashMap<(i32, i32), (i32, i32)> = HashMap::new();
+        let mut n_nodes_visited = 0;
+        queue.push((0, 0, *start_loc.0));
 
-    // throw it in a heap
-    heap.push(initial_path);
+        while !queue.is_empty() {
+            queue.sort();
+            let (priority, length, loc) = queue.pop().unwrap();
+            let (char, visited) = nodes.get(&loc).unwrap();
+            if *char == search {
+                println!("Path with length {} found, visited {} nodes", length, n_nodes_visited);
+                draw_path(loc, nodes, parents, invert_direction);
+                break;
+            } else {
+                for n in neighbors(loc, &nodes, invert_direction) {
+                    if !nodes.get(&n).unwrap().1 {
+                        match queue.iter().enumerate().filter(|(i, a)| a.2 == n).last() {
+                            None => {
+                                queue.push((-(length + 1 + heuristic(n)), length + 1, n));
+                                parents.insert(n, loc);
+                            }
+                            Some((i, (f, l, neighbor_loc))) => {
+                                if length + 1 < *l {
+                                    parents.insert(n, loc);
+                                    queue.remove(i);
+                                    queue.push((-(length + 1 + heuristic(n)), length + 1, n));
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            nodes.get_mut(&loc).unwrap().1 = true;
+            n_nodes_visited += 1;
+        }
+    } else {
+        println!("Ambiguous start node")
+    }
+}
 
-    // Store solution
-    let mut solution = Path::new(vec![(0, 0)], &landscape);
-
-    let mut n_evaluations = 0;
-
-    // While the heap is not empty, and solution has not been found:
-    while !heap.is_empty() {
-        //  take the next value from the heap
-        let next_path = heap.pop().unwrap();
-        let next_endpoint = next_path.get_endpoint();
-        landscape.visited_map.borrow_mut()[[next_endpoint.0 as usize, next_endpoint.1 as usize]] =
-            true;
-
-        //  if is the solution
-        if next_path.is_solution() {
-            solution = next_path;
-            break;
-        } else {
-            for neighbor in landscape.neighbors(next_path.get_endpoint()) {
-                let mut cloned_path = next_path.path.clone();
-                cloned_path.push(neighbor);
-                heap.push(Path {
-                    path: cloned_path,
-                    mountainrange: &landscape,
-                })
+fn draw_path(
+    mut loc: (i32, i32),
+    nodes: HashMap<(i32, i32), (char, bool)>,
+    parents: HashMap<(i32, i32), (i32, i32)>,
+    invert_direction: bool,
+) {
+    let n_rows = nodes.keys().map(|a| a.0).max().unwrap();
+    let n_cols = nodes.keys().map(|a| a.1).max().unwrap();
+    let mut map = Array2::from_elem((n_rows as usize + 1, n_cols as usize + 1), '.');
+    loop {
+        match parents.get(&loc) {
+            None => break,
+            Some(parent) => {
+                map[[parent.0 as usize, parent.1 as usize]] = match (parent.0 - loc.0, parent.1 - loc.1) {
+                    (1, 0) => '^',
+                    (-1, 0) => 'v',
+                    (0, 1) => '<',
+                    (0, -1) => '>',
+                    _ => unreachable!(),
+                };
+                loc = parent.clone();
             }
         }
-        n_evaluations += 1;
     }
-    println!(
-        "Found a path of len {} in {} evaluations",
-        solution.length(),
-        n_evaluations
-    );
-    solution.draw();
-}
-
-struct Path<'a> {
-    path: Vec<(i32, i32)>,
-    mountainrange: &'a MountainRange,
-}
-
-impl<'a> Path<'a> {
-    fn new(path: Vec<(i32, i32)>, mountainrange: &'a MountainRange) -> Path<'a> {
-        Path {
-            path,
-            mountainrange,
+    for i in map.rows() {
+        for j in i {
+            print!("{j}");
         }
-    }
-    fn length(&self) -> u32 {
-        (self.path.len() as u32) - 1
-    }
-    fn heuristic(&self) -> u32 {
-        self.mountainrange.heuristic(self.path[self.path.len() - 1])
-    }
-    fn priority(&self) -> i32 {
-        -(self.length() as i32 + self.heuristic() as i32)
-    }
-    fn is_solution(&self) -> bool {
-        self.mountainrange
-            .is_endpoint(self.path[self.path.len() - 1])
-    }
-    fn get_endpoint(&self) -> (i32, i32) {
-        *self.path.last().unwrap()
-    }
-    fn draw(&self) {
-        let shape = self.mountainrange.heightmap.shape();
-        let mut chars = Array2::from_elem((shape[0], shape[1]), '.');
-
-        for i in 0..self.path.len() - 1 {
-            let j = i as usize;
-            let this = self.path[j];
-            let next = self.path[j + 1];
-            match (next.0 - this.0, next.1 - this.1) {
-                (-1, 0) => chars[[this.0 as usize, this.1 as usize]] = '^',
-                (1, 0) => chars[[this.0 as usize, this.1 as usize]] = 'v',
-                (0, 1) => chars[[this.0 as usize, this.1 as usize]] = '>',
-                (0, -1) => chars[[this.0 as usize, this.1 as usize]] = '<',
-                _ => panic!("EHMAGAWD"),
-            }
-            chars[[next.0 as usize, next.1 as usize]] = 'E'
-        }
-        for i in chars.rows() {
-            for j in i {
-                print!("{j}");
-            }
-            println!();
-        }
+        println!();
     }
 }
 
-impl PartialEq for Path<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.priority() == other.priority()
+fn parse_mountains(input: String) -> HashMap<(i32, i32), (char, bool)> {
+    let n_rows = input.lines().count();
+    let n_elements = input.replace("\n", "").chars().count();
+    let n_cols = n_elements / n_rows;
+    HashMap::from_iter(
+        input
+            .replace("\n", "")
+            .chars()
+            .enumerate()
+            .map(|(i, v)| (((i / n_cols) as i32, (i % n_cols) as i32), (v, false))),
+    )
+}
+
+fn neighbors(loc: (i32, i32), nodes: &HashMap<(i32, i32), (char, bool)>, invert_direction: bool) -> Vec<(i32, i32)> {
+    let offsets = vec![(-1, 0), (1, 0), (0, -1), (0, 1)];
+    offsets
+        .iter()
+        .map(|o| (o.0 + loc.0, o.1 + loc.1))
+        .filter(|n| nodes.contains_key(n)) // The nodes exists
+        .filter(|n| !nodes.get(&n).unwrap().1)
+        .filter(|n| reachable(loc, *n, &nodes, invert_direction)) // The node is reachable from my position
+        .collect::<Vec<(i32, i32)>>()
+}
+
+fn char_height(char: char) -> usize {
+    match char {
+        'E' => 25,
+        'S' => 0,
+        a => a as usize - 97,
     }
 }
 
-impl PartialOrd for Path<'_> {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.priority().partial_cmp(&other.priority())
-    }
-}
-
-impl Eq for Path<'_> {}
-
-impl Ord for Path<'_> {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.priority().cmp(&other.priority())
-    }
-}
-
-struct MountainRange {
-    heightmap: Array2<char>,
-    visited_map: RefCell<Array2<bool>>,
-    n_cols: i32,
-    n_rows: i32,
-    start_loc: (i32, i32),
-    end_loc: (i32, i32),
-}
-
-impl MountainRange {
-    fn new(input: String) -> Self {
-        let n_rows = input.lines().count();
-        let n_cols = input.replace("\n", "").chars().count() / n_rows;
-
-        let binding = input.replace("\n", "");
-        let mut chars = binding.chars().collect::<Vec<char>>();
-
-        let start_loc = chars.iter().position(|f| *f == 'S').unwrap();
-        let end_loc = chars.iter().position(|f| *f == 'E').unwrap();
-
-        let start_tup = ((start_loc / n_cols) as i32, (start_loc % n_cols) as i32);
-        let end_tup = ((end_loc / n_cols) as i32, (end_loc % n_cols) as i32);
-
-        chars[start_loc] = 'a';
-        chars[end_loc] = 'z';
-
-        let visited = Array2::from_elem((n_rows, n_cols), false);
-
-        MountainRange {
-            heightmap: Array2::from_shape_vec((n_rows, n_cols), chars).unwrap(),
-            n_cols: n_cols as i32,
-            n_rows: n_rows as i32,
-            start_loc: start_tup,
-            end_loc: end_tup,
-            visited_map: RefCell::new(visited),
-        }
-    }
-
-    fn neighbors(&self, loc: (i32, i32)) -> Vec<(i32, i32)> {
-        let offsets = vec![(-1, 0), (1, 0), (0, -1), (0, 1)];
-
-        offsets
-            .iter()
-            .map(|(row, col)| (row + loc.0, col + loc.1))
-            .filter(|(row, col)| 0 <= *row && *row < self.n_rows && 0 <= *col && *col < self.n_cols)
-            .filter(|(row, col)| {
-                self.heightmap[[*row as usize, *col as usize]] as i32
-                    <= self.heightmap[[loc.0 as usize, loc.1 as usize]] as i32 + 1
-            })
-            .filter(|(row, col)| !self.visited_map.borrow()[[*row as usize, *col as usize]])
-            .collect::<Vec<(i32, i32)>>()
-    }
-
-    fn show_range(&self) {
-        println!("{}", self.heightmap.to_string());
-    }
-    fn show_visited(&self) {
-        println!("{}", self.visited_map.borrow().to_string());
-    }
-
-    fn heuristic(&self, loc: (i32, i32)) -> u32 {
-        ((loc.0 - self.end_loc.0).abs() + (loc.1 - self.end_loc.1).abs())
-            .try_into()
-            .unwrap()
-    }
-
-    fn is_endpoint(&self, loc: (i32, i32)) -> bool {
-        loc.0 == self.end_loc.0 && loc.1 == self.end_loc.1
-    }
+fn reachable(
+    from: (i32, i32),
+    to: (i32, i32),
+    nodes: &HashMap<(i32, i32), (char, bool)>,
+    invert_direction: bool,
+) -> bool {
+    let (from, to) = if invert_direction { (to, from) } else { (from, to) };
+    let from_height = char_height(nodes.get(&from).unwrap().0);
+    let to_height = char_height(nodes.get(&to).unwrap().0);
+    from_height + 1 >= to_height
 }
