@@ -1,23 +1,29 @@
+use keyed_priority_queue::Entry::{Occupied, Vacant};
+use keyed_priority_queue::{KeyedPriorityQueue, OccupiedEntry, VacantEntry};
+use ndarray::Array2;
 use std::{
     borrow::Borrow,
     char,
     collections::{BinaryHeap, HashMap, HashSet},
+    time::Instant,
 };
-
-use ndarray::Array2;
 
 pub fn compute_solution_1(input: String) {
     let nodes = parse_mountains(input);
     let end_loc = nodes.iter().filter(|(loc, (char, _))| *char == 'E').collect::<Vec<(&(i32, i32), &(char, bool))>>();
     let end_loc = end_loc[0].0.clone();
     let manhattan_distance = |n: (i32, i32)| (n.0 - end_loc.0).abs() + (n.1 - end_loc.1).abs();
+    let now = Instant::now();
     a_star(nodes, 'S', 'E', manhattan_distance, false);
+    println!(" - took {} ms", now.elapsed().as_millis());
 }
 
 pub fn compute_solution_2(input: String) {
     let nodes = parse_mountains(input);
     let heuristic = |n: (i32, i32)| 0;
+    let now = Instant::now();
     a_star(nodes, 'E', 'a', heuristic, true);
+    println!(" - took {} ms", now.elapsed().as_millis());
 }
 
 pub fn a_star<F: Fn((i32, i32)) -> i32>(
@@ -33,14 +39,13 @@ pub fn a_star<F: Fn((i32, i32)) -> i32>(
     if start_loc.len() == 1 {
         let start_loc = start_loc[0];
         let n_nodes = nodes.len() as i32;
-        let mut queue: Vec<(i32, i32, (i32, i32))> = Vec::new();
+        let mut queue: KeyedPriorityQueue<(i32, i32), (i32, i32)> = KeyedPriorityQueue::new();
         let mut parents: HashMap<(i32, i32), (i32, i32)> = HashMap::new();
         let mut n_nodes_visited = 0;
-        queue.push((0, 0, *start_loc.0));
+        queue.push(*start_loc.0, (0, 0));
 
         while !queue.is_empty() {
-            queue.sort();
-            let (priority, length, loc) = queue.pop().unwrap();
+            let (loc, (priority, length)) = queue.pop().unwrap();
             let (char, visited) = nodes.get(&loc).unwrap();
             if *char == search {
                 println!("Path with length {} found, visited {} nodes", length, n_nodes_visited);
@@ -49,19 +54,18 @@ pub fn a_star<F: Fn((i32, i32)) -> i32>(
             } else {
                 for n in neighbors(loc, &nodes, invert_direction) {
                     if !nodes.get(&n).unwrap().1 {
-                        match queue.iter().enumerate().filter(|(i, a)| a.2 == n).last() {
-                            None => {
-                                queue.push((-(length + 1 + heuristic(n)), length + 1, n));
-                                parents.insert(n, loc);
-                            }
-                            Some((i, (f, l, neighbor_loc))) => {
-                                if length + 1 < *l {
+                        match queue.entry(n) {
+                            Occupied(a) => {
+                                if length + 1 < a.get_priority().1 {
                                     parents.insert(n, loc);
-                                    queue.remove(i);
-                                    queue.push((-(length + 1 + heuristic(n)), length + 1, n));
+                                    a.set_priority((-(length + 1 + heuristic(n)), length + 1));
                                 }
                             }
-                        }
+                            Vacant(a) => {
+                                queue.push(n, (-(length + 1 + heuristic(n)), length + 1));
+                                parents.insert(n, loc);
+                            }
+                        };
                     }
                 }
             };
