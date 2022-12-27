@@ -1,5 +1,3 @@
-max_width = 140
+max_width = 150
 use_small_heuristics = "Max"
-enum_discrim_align_threshold = 10
 fn_args_layout = "Tall"
-fn_single_line = true

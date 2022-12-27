@@ -62,3 +62,8 @@ Wow, that was a bit of work. I finished part one but I didn't make it general en
 
 Not too difficult, most work went into the parser I think. Deriving equalities was straightforward. Once those were done, it was a matter of implementing the actual Ord and Eq and partials, allowing me to sort the list. Nice! Over halfway done :)
 
+### Day 14
+
+I liked this one. I even decided to animate the falling grains of sand, so you could actually see them rolling down the slopes. This was a bit too slow so I scratched it. 
+
+I had a frustrating bug because I didn't realise that ranges (`a..b`) *must* have `a<=b`. I don't like it, it creates extra work, and the way python does it works fine: `range(a,b,c)`, where the only restriction is that the three parameters are integers. If `c` is omitted, it defaults to 1, and if `a` is omitted, it defaults to 0. I guess I have to get used to it. In a case when I can know beforehand that `a>b`, I can of course use `(b..a).rev()`, but in this case I could not know that. Sorting the entries solves that, but that is extra work.
