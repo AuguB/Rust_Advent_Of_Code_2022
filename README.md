@@ -67,3 +67,7 @@ Not too difficult, most work went into the parser I think. Deriving equalities w
 I liked this one. I even decided to animate the falling grains of sand, so you could actually see them rolling down the slopes. This was a bit too slow so I scratched it. 
 
 I had a frustrating bug because I didn't realise that ranges (`a..b`) *must* have `a<=b`. I don't like it, it creates extra work, and the way python does it works fine: `range(a,b,c)`, where the only restriction is that the three parameters are integers. If `c` is omitted, it defaults to 1, and if `a` is omitted, it defaults to 0. I guess I have to get used to it. In a case when I can know beforehand that `a>b`, I can of course use `(b..a).rev()`, but in this case I could not know that. Sorting the entries solves that, but that is extra work.
+
+### Day 15
+
+First attempt was slow, but now I wrote it with ranges and overlaps and it's fast. Part 2 takes a little over a second. This was fun, and part 2 was a nice extension. On to day 16!
