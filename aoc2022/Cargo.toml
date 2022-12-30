@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 ndarray = "0.15.6"
 regex = "1.7.0"
+itertools = "0.8.2"
+factorial = "0.3.0"
+memoize = "0.3.3"

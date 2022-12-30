@@ -71,3 +71,28 @@ I had a frustrating bug because I didn't realise that ranges (`a..b`) *must* hav
 ### Day 15
 
 First attempt was slow, but now I wrote it with ranges and overlaps and it's fast. Part 2 takes a little over a second. This was fun, and part 2 was a nice extension. On to day 16!
+
+
+### Day 16
+
+Alright, here we go. Day 16 is the big one for me. My friend told me about it and I think this is one of the big reasons for doing the AOC.
+
+First attempt is going to be a greedy algorithm. As follows:
+```
+while time is not up:
+    for each node n:
+        compute the reward it would give to go and open it now:
+        (time - 1 - dist(n)) * flow_rate(n)
+    go to the node with the highest reward, and open it
+```
+
+Of course, this approach does not try to stay close to other potential nodes. Let's give it a go. 
+
+***UPDATE***:
+
+The greedy algorithm did not find the optimal solution, so I wrote a complete search algorithm, by looping over all permutations of nodes. This was infeasible as well because of the sheer amount of possible permutations, which was on the order of 10^13 or something like that. I then used a graph search algorithm with a priority heap, which worked (after some serious bug hunting) and was fast (~800 ms on `--release`). After completing this day I realized that I am prone to using beefy datastrucures (HashMap, HashSet) when a more lightweight datastructure would suffice. So I decided to re-write the algorithm for using numbers instead of Strings, and without any hashing. This led to another annoying bug (the example data has the initial node "AA", on the first position, whereas it is not in the real solution. So when mapping to numbers, I assumed the starting positon was 0, which was fine for the example data, but not for the real data)
+
+I think I have a solution for part 2, I just need to write it. It is a generalization of the current solution. The current solution has a max-heap with tuples of (priority, score, timer, current, opened), with the priority derived in the previous step, to allow to stop early when all potential nodes are out of reach. The next part has two 'players', which will share the priority, timer, score, and opened, but will need their own current location. So we will have to use tuples of: (priority, score, timer, currents, opened), where currents is a list containing the current location of every player. There is one other problem; the players' visits to nodes with flow will be desynchronized. Where before we could collapse the whole problem to only those nodes that matter, we can solve this problem now by visiting every intermediate nodes in subsequent steps, but we will also have to keep track of a 'heading' for each player, to avoid creating an enormous search tree. We will thus have tuples of (priority, score, timer, currents, headings, opened), and we will have to make sure of the following:
+* When a new node has to be selected for players, we have to ignore the opened valves as well as valves that other players are heading towards.
+* When a player reaches a node he was heading towards, we need to let him sit there for one turn to open the valve, and then continue
+* The priority must be the timer - d - 1, where d is the minimal distance between a player and their heading. We know that if the priority is 0 we can safely stop the simulation, because for none of the states in the heap, a player will reach their heading. 
